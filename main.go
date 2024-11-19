@@ -124,10 +124,18 @@ func checkOriginRemote() (bool, error) {
 		return false, fmt.Errorf("failed to get remotes: %w", err)
 	}
 	if len(remotes) == 0 {
-		fmt.Println("no origin remote found")
+		fmt.Println("no remotes found")
 		return false, nil
 	}
-	return true, nil
+
+	remoteList := strings.Split(strings.TrimSpace(string(remotes)), "\n")
+	for _, remote := range remoteList {
+		if remote == "origin" {
+			return true, nil
+		}
+	}
+	fmt.Println("no origin remote found")
+	return false, nil
 }
 
 func fetchFromRemote() error {
