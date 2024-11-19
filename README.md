@@ -27,3 +27,5 @@ information, this tool will add all files to the commit.
 ```bash
 gac
 ```
+
+[![Go](https://github.com/rafamoreira/gac/actions/workflows/go.yml/badge.svg?branch=master)](https://github.com/rafamoreira/gac/actions/workflows/go.yml)
