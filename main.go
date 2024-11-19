@@ -34,7 +34,10 @@ func run() error {
 
 	// Try to fetch from remote if there's a remote origin
 
-	origin := checkOriginRemote()
+	origin, err := checkOriginRemote()
+	if err != nil {
+		return fmt.Errorf("failed to check origin remote: %w", err)
+	}
 	if origin {
 		if err := fetchFromRemote(); err != nil {
 			fmt.Println("No remote found or fetch failed, continuing with local operations")
@@ -91,14 +94,17 @@ func createFirstCommit() error {
 	return nil
 }
 
-func checkOriginRemote() bool {
+func checkOriginRemote() (bool, error) {
 	cmd := exec.Command("git", "remote")
-	remotes := cmd.Run()
-	if remotes == nil {
-		fmt.Println("no origin remote found")
-		return false
+	remotes, err := cmd.Output()
+	if err != nil {
+		return false, fmt.Errorf("failed to get remotes: %w", err)
 	}
-	return true
+	if len(remotes) == 0 {
+		fmt.Println("no origin remote found")
+		return false, nil
+	}
+	return true, nil
 }
 
 func fetchFromRemote() error {
