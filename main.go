@@ -50,6 +50,18 @@ func run() error {
 
 	}
 
+	// Determine if there are any changes
+	cmd := exec.Command("git", "status", "--porcelain")
+	out, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("failed to get git status: %w", err)
+	}
+	outStr := strings.TrimSpace(string(out))
+	if outStr == "" {
+		fmt.Println("No changes to commit")
+		return nil
+	}
+
 	// Get next commit number
 	nextNumber, err := determineNextCommitNumber()
 	if err != nil {
