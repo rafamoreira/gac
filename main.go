@@ -34,17 +34,17 @@ func run() error {
 
 	// Try to fetch from remote if there's a remote origin
 
-	if err := checkOriginRemote(); err != nil {
-		return fmt.Errorf("no remote origin found: %w", err)
-	}
-
-	if err := fetchFromRemote(); err != nil {
-		fmt.Println("No remote found or fetch failed, continuing with local operations")
-	} else {
-		// If fetch succeeded, try to pull
-		if err := pullChanges(); err != nil {
-			return fmt.Errorf("failed to pull changes: %w", err)
+	origin := checkOriginRemote()
+	if origin {
+		if err := fetchFromRemote(); err != nil {
+			fmt.Println("No remote found or fetch failed, continuing with local operations")
+		} else {
+			// If fetch succeeded, try to pull
+			if err := pullChanges(); err != nil {
+				return fmt.Errorf("failed to pull changes: %w", err)
+			}
 		}
+
 	}
 
 	// Get next commit number
@@ -91,10 +91,14 @@ func createFirstCommit() error {
 	return nil
 }
 
-func checkOriginRemote() error {
+func checkOriginRemote() bool {
 	cmd := exec.Command("git", "remote")
 	remotes := cmd.Run()
-	return remotes
+	if remotes == nil {
+		fmt.Println("no origin remote found")
+		return false
+	}
+	return true
 }
 
 func fetchFromRemote() error {
