@@ -51,13 +51,11 @@ func run() error {
 	}
 
 	// Determine if there are any changes
-	cmd := exec.Command("git", "status", "--porcelain")
-	out, err := cmd.Output()
+	dirty, err := checkForChanges()
 	if err != nil {
-		return fmt.Errorf("failed to get git status: %w", err)
+		return fmt.Errorf("failed to check for changes: %w", err)
 	}
-	outStr := strings.TrimSpace(string(out))
-	if outStr == "" {
+	if !dirty {
 		fmt.Println("No changes to commit")
 		return nil
 	}
@@ -75,6 +73,19 @@ func run() error {
 
 	fmt.Printf("Successfully created commit %d\n", nextNumber)
 	return nil
+}
+
+func checkForChanges() (bool, error) {
+	cmd := exec.Command("git", "status", "--porcelain")
+	out, err := cmd.Output()
+	if err != nil {
+		return false, fmt.Errorf("failed to get git status: %w", err)
+	}
+	outStr := strings.TrimSpace(string(out))
+	if outStr == "" {
+		return false, nil
+	}
+	return true, nil
 }
 
 func checkGitRepo() error {
