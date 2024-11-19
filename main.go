@@ -32,6 +32,16 @@ func run() error {
 		return createFirstCommit()
 	}
 
+	// Determine if there are any changes
+	dirty, err := checkForChanges()
+	if err != nil {
+		return fmt.Errorf("failed to check for changes: %w", err)
+	}
+	if !dirty {
+		fmt.Println("No changes to commit")
+		return nil
+	}
+
 	// Try to fetch from remote if there's a remote origin
 
 	origin, err := checkOriginRemote()
@@ -48,16 +58,6 @@ func run() error {
 			}
 		}
 
-	}
-
-	// Determine if there are any changes
-	dirty, err := checkForChanges()
-	if err != nil {
-		return fmt.Errorf("failed to check for changes: %w", err)
-	}
-	if !dirty {
-		fmt.Println("No changes to commit")
-		return nil
 	}
 
 	// Get next commit number
