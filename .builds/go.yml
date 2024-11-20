@@ -5,4 +5,4 @@ tasks:
   - setup: |
       cd gac
   - build: |
-      go build -o gac .
+      go build -o gac
