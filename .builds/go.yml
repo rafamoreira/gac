@@ -2,7 +2,8 @@ image: alpine/edge
 packages:
   - go
 tasks:
-  - setup: |
-      cd gac
   - build: |
+      cd gac
       go build -o gac
+artifacts:
+  - gac/gac
