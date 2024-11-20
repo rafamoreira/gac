@@ -1,6 +1,6 @@
 image: alpine/edge
+packages:
+  - go
 tasks:
-  - say-hello: |
-      echo hello
-  - say-world: |
-      echo world
+  - build: |
+      go build -v ./...
