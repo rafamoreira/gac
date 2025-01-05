@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -27,7 +28,7 @@ func main() {
 	// 	dryRun:      *dryRun,
 	// }
 
-	config, err := LoadConfig("config.toml")
+	config, err := LoadConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -55,12 +56,43 @@ func extractArgs() (*bool, string) {
 	return dryRun, commitMsg
 }
 
-func LoadConfig(configPath string) (Config, error) {
+func getConfigPath() string {
+	configHome := os.Getenv("XDG_CONFIG_HOME")
+	if configHome == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			log.Fatal(err)
+		}
+		configHome = filepath.Join(home, ".config")
+	}
+	return filepath.Join(configHome, "gac", "config.toml")
+}
+
+func LoadConfig() (Config, error) {
+	configPath := getConfigPath()
+	configDir := filepath.Dir(configPath)
+
+	// Create the config directory if it doesn't exist
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		return Config{}, err
+	}
+
 	var config Config
 
-	_, err := toml.DecodeFile(configPath, &config)
+	// Create a default config if it doesn't exist
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		defaultConfig := []byte("CheckRemote = true\n")
+		if err := os.WriteFile(configPath, defaultConfig, 0644); err != nil {
+			return Config{}, fmt.Errorf("failed to create default config: %w", err)
+		}
+	}
 
-	return config, err
+	// Load the config
+	_, err := toml.DecodeFile(configPath, &config)
+	if err != nil {
+		return Config{}, fmt.Errorf("failed to load config: %w", err)
+	}
+	return config, nil
 }
 
 func run(config Config) error {
