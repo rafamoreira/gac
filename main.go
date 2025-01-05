@@ -77,6 +77,8 @@ func run(dryRun bool) error {
 		return fmt.Errorf("failed to determine next commit number: %w", err)
 	}
 
+	fmt.Println("Next commit number: %d\n", dryRun, nextNumber)
+
 	if !dryRun {
 		// Create the commit
 		if err := createCommit(nextNumber); err != nil {
