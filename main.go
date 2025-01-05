@@ -12,23 +12,35 @@ import (
 type Config struct {
 	checkRemote bool
 	commitMsg   string
+	dryRun      bool
 }
 
 func main() {
 	dryRun := flag.Bool("dry-run", false, "Run without committing")
 	flag.Parse()
+	args := flag.Args()
 
-	err := run(*dryRun)
+	var commitMsg string
+	if len(args) >= 1 {
+		commitMsg = args[0]
+	} else {
+		commitMsg = ""
+	}
+
+	config := Config{
+		checkRemote: false,
+		commitMsg:   commitMsg,
+		dryRun:      *dryRun,
+	}
+
+	err := run(config)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 }
 
-func run(dryRun bool) error {
-	config := Config{
-		checkRemote: false,
-	}
+func run(config Config) error {
 
 	// Check if we're in a git repository
 	if err := checkGitRepo(); err != nil {
@@ -73,23 +85,35 @@ func run(dryRun bool) error {
 		}
 	}
 
-	// Get next commit number
-	nextNumber, err := determineNextCommitNumber()
+	commitMsg, err := getCommitMessage(config.commitMsg)
 	if err != nil {
-		return fmt.Errorf("failed to determine next commit number: %w", err)
+		return fmt.Errorf("failed to get commit message: %w", err)
 	}
 
-	if !dryRun {
+	if !config.dryRun {
 		// Create the commit
-		if err := createCommit(nextNumber); err != nil {
+		if err := createCommit(commitMsg); err != nil {
 			return fmt.Errorf("failed to create commit: %w", err)
 		}
-		fmt.Printf("Successfully created commit %d\n", nextNumber)
+		fmt.Printf("Successfully created commit %s\n", commitMsg)
 	} else {
-		fmt.Printf("Dry-run: Would create commit %d\n", nextNumber)
+		fmt.Printf("Dry-run: Would create commit with message: %s\n", commitMsg)
 	}
 
 	return nil
+}
+
+func getCommitMessage(msg string) (string, error) {
+	number, err := determineNextCommitNumber()
+	if err != nil {
+		return "", fmt.Errorf("failed to determine next commit number: %w", err)
+	}
+
+	if msg == "" {
+		return fmt.Sprintf("%d", number), nil
+	} else {
+		return fmt.Sprintf("%d: %s", number, msg), nil
+	}
 }
 
 func checkForChanges() (bool, error) {
@@ -210,7 +234,7 @@ func countNonMergeCommits() (int, error) {
 	return count + 1, nil
 }
 
-func createCommit(number int) error {
+func createCommit(commitMsg string) error {
 	// Stage all changes
 	cmd := exec.Command("git", "add", ".")
 	if err := cmd.Run(); err != nil {
@@ -218,7 +242,7 @@ func createCommit(number int) error {
 	}
 
 	// Create commit
-	cmd = exec.Command("git", "commit", "-m", strconv.Itoa(number))
+	cmd = exec.Command("git", "commit", "-m", commitMsg)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to create commit: %s", out)
 	}
