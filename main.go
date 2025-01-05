@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+type Config struct {
+	checkRemote bool
+}
+
 func main() {
 	err := run()
 	if err != nil {
@@ -17,6 +21,9 @@ func main() {
 }
 
 func run() error {
+	config := Config{
+		checkRemote: false,
+	}
 	// Check if we're in a git repository
 	if err := checkGitRepo(); err != nil {
 		return fmt.Errorf("not in a git repository: %w", err)
@@ -42,22 +49,23 @@ func run() error {
 		return nil
 	}
 
-	// Try to fetch from remote if there's a remote origin
-
-	origin, err := checkOriginRemote()
-	if err != nil {
-		return fmt.Errorf("failed to check origin remote: %w", err)
-	}
-	if origin {
-		if err := fetchFromRemote(); err != nil {
-			fmt.Println("No remote found or fetch failed, continuing with local operations")
-		} else {
-			// If fetch succeeded, try to pull
-			if err := pullChanges(); err != nil {
-				return fmt.Errorf("failed to pull changes: %w", err)
-			}
+	if config.checkRemote {
+		// Try to fetch from remote if there's a remote origin
+		origin, err := checkOriginRemote()
+		if err != nil {
+			return fmt.Errorf("failed to check origin remote: %w", err)
 		}
+		if origin {
+			if err := fetchFromRemote(); err != nil {
+				fmt.Println("No remote found or fetch failed, continuing with local operations")
+			} else {
+				// If fetch succeeded, try to pull
+				if err := pullChanges(); err != nil {
+					return fmt.Errorf("failed to pull changes: %w", err)
+				}
+			}
 
+		}
 	}
 
 	// Get next commit number
