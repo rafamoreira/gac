@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -14,14 +15,15 @@ type Config struct {
 }
 
 func main() {
-	err := run()
+	dryRun := flag.Bool("dry-run", false, "Run without committing")
+	err := run(*dryRun)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
+func run(dryRun bool) error {
 	config := Config{
 		checkRemote: false,
 	}
@@ -75,9 +77,11 @@ func run() error {
 		return fmt.Errorf("failed to determine next commit number: %w", err)
 	}
 
-	// Create the commit
-	if err := createCommit(nextNumber); err != nil {
-		return fmt.Errorf("failed to create commit: %w", err)
+	if !dryRun {
+		// Create the commit
+		if err := createCommit(nextNumber); err != nil {
+			return fmt.Errorf("failed to create commit: %w", err)
+		}
 	}
 
 	fmt.Printf("Successfully created commit %d\n", nextNumber)
