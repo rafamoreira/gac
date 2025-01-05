@@ -149,6 +149,7 @@ func checkOriginRemote() (bool, error) {
 			return true, nil
 		}
 	}
+
 	fmt.Println("no origin remote found")
 	return false, nil
 }
