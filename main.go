@@ -10,6 +10,7 @@ import (
 
 type Config struct {
 	checkRemote bool
+	commitMsg   string
 }
 
 func main() {
@@ -24,6 +25,7 @@ func run() error {
 	config := Config{
 		checkRemote: false,
 	}
+
 	// Check if we're in a git repository
 	if err := checkGitRepo(); err != nil {
 		return fmt.Errorf("not in a git repository: %w", err)
@@ -64,7 +66,6 @@ func run() error {
 					return fmt.Errorf("failed to pull changes: %w", err)
 				}
 			}
-
 		}
 	}
 
