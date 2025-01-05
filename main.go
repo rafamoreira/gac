@@ -3,19 +3,45 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/BurntSushi/toml"
 )
 
 type Config struct {
-	checkRemote bool
+	CheckRemote bool
 	commitMsg   string
 	dryRun      bool
 }
 
 func main() {
+	dryRun, commitMsg := extractArgs()
+
+	// config := Config{
+	// 	checkRemote: false,
+	// 	commitMsg:   commitMsg,
+	// 	dryRun:      *dryRun,
+	// }
+
+	config, err := LoadConfig("config.toml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	config.commitMsg = commitMsg
+	config.dryRun = *dryRun
+
+	err = run(config)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func extractArgs() (*bool, string) {
 	dryRun := flag.Bool("dry-run", false, "Run without committing")
 	flag.Parse()
 	args := flag.Args()
@@ -26,18 +52,15 @@ func main() {
 	} else {
 		commitMsg = ""
 	}
+	return dryRun, commitMsg
+}
 
-	config := Config{
-		checkRemote: false,
-		commitMsg:   commitMsg,
-		dryRun:      *dryRun,
-	}
+func LoadConfig(configPath string) (Config, error) {
+	var config Config
 
-	err := run(config)
-	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
+	_, err := toml.DecodeFile(configPath, &config)
+
+	return config, err
 }
 
 func run(config Config) error {
@@ -67,7 +90,7 @@ func run(config Config) error {
 		return nil
 	}
 
-	if config.checkRemote {
+	if config.CheckRemote {
 		// Try to fetch from remote if there's a remote origin
 		origin, err := checkOriginRemote()
 		if err != nil {
