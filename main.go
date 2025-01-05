@@ -16,6 +16,8 @@ type Config struct {
 
 func main() {
 	dryRun := flag.Bool("dry-run", false, "Run without committing")
+	flag.Parse()
+
 	err := run(*dryRun)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
@@ -77,16 +79,16 @@ func run(dryRun bool) error {
 		return fmt.Errorf("failed to determine next commit number: %w", err)
 	}
 
-	fmt.Println("Next commit number: %d\n", dryRun, nextNumber)
-
 	if !dryRun {
 		// Create the commit
 		if err := createCommit(nextNumber); err != nil {
 			return fmt.Errorf("failed to create commit: %w", err)
 		}
+		fmt.Printf("Successfully created commit %d\n", nextNumber)
+	} else {
+		fmt.Printf("Dry-run: Would create commit %d\n", nextNumber)
 	}
 
-	fmt.Printf("Successfully created commit %d\n", nextNumber)
 	return nil
 }
 
@@ -149,7 +151,6 @@ func checkOriginRemote() (bool, error) {
 			return true, nil
 		}
 	}
-
 	fmt.Println("no origin remote found")
 	return false, nil
 }
